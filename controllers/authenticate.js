@@ -8,8 +8,14 @@ var config = require('../config');
 
 // Authenticate the user
 exports.login = function(req, res, next) {
-    User.findOne({email: undefined}, function(err, user) {
-        // User exist, make sure the password is correct
+    // Make sure we're getting all of the necessary fields
+    if (req.body.email == undefined || req.body.password == undefined) {
+        var err = new Error();
+        err.status = 400;
+        return next(err);
+    }
+    User.findOne({email: req.body.email}, function(err, user) {
+        // User exists, make sure the password is correct
         if (user != null &&
             bcrypt.compareSync(req.body.password, user.password)) {
             // Create the JSON token
