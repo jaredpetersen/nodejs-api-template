@@ -1,11 +1,16 @@
+'use strict';
+
 /**
  * Module dependencies.
  */
 
 var Base = require('./base');
-var create = require('lodash.create');
+var utils = require('../utils');
+var inherits = utils.inherits;
 var fs = require('fs');
-var escape = require('../utils').escape;
+var escape = utils.escape;
+var mkdirp = require('mkdirp');
+var path = require('path');
 
 /**
  * Save timer references to avoid Sinon interfering (see GH-237).
@@ -31,33 +36,34 @@ exports = module.exports = XUnit;
  * @api public
  * @param {Runner} runner
  */
-function XUnit(runner, options) {
+function XUnit (runner, options) {
   Base.call(this, runner);
 
   var stats = this.stats;
   var tests = [];
   var self = this;
 
-  if (options.reporterOptions && options.reporterOptions.output) {
+  if (options && options.reporterOptions && options.reporterOptions.output) {
     if (!fs.createWriteStream) {
       throw new Error('file output not supported in browser');
     }
+    mkdirp.sync(path.dirname(options.reporterOptions.output));
     self.fileStream = fs.createWriteStream(options.reporterOptions.output);
   }
 
-  runner.on('pending', function(test) {
+  runner.on('pending', function (test) {
     tests.push(test);
   });
 
-  runner.on('pass', function(test) {
+  runner.on('pass', function (test) {
     tests.push(test);
   });
 
-  runner.on('fail', function(test) {
+  runner.on('fail', function (test) {
     tests.push(test);
   });
 
-  runner.on('end', function() {
+  runner.on('end', function () {
     self.write(tag('testsuite', {
       name: 'Mocha Tests',
       tests: stats.tests,
@@ -68,7 +74,7 @@ function XUnit(runner, options) {
       time: (stats.duration / 1000) || 0
     }, false));
 
-    tests.forEach(function(t) {
+    tests.forEach(function (t) {
       self.test(t);
     });
 
@@ -77,14 +83,19 @@ function XUnit(runner, options) {
 }
 
 /**
+ * Inherit from `Base.prototype`.
+ */
+inherits(XUnit, Base);
+
+/**
  * Override done to close the stream (if it's a file).
  *
  * @param failures
  * @param {Function} fn
  */
-XUnit.prototype.done = function(failures, fn) {
+XUnit.prototype.done = function (failures, fn) {
   if (this.fileStream) {
-    this.fileStream.end(function() {
+    this.fileStream.end(function () {
       fn(failures);
     });
   } else {
@@ -93,21 +104,15 @@ XUnit.prototype.done = function(failures, fn) {
 };
 
 /**
- * Inherit from `Base.prototype`.
- */
-
-XUnit.prototype = create(Base.prototype, {
-  constructor: XUnit
-});
-
-/**
  * Write out the given line.
  *
  * @param {string} line
  */
-XUnit.prototype.write = function(line) {
+XUnit.prototype.write = function (line) {
   if (this.fileStream) {
     this.fileStream.write(line + '\n');
+  } else if (typeof process === 'object' && process.stdout) {
+    process.stdout.write(line + '\n');
   } else {
     console.log(line);
   }
@@ -118,7 +123,7 @@ XUnit.prototype.write = function(line) {
  *
  * @param {Test} test
  */
-XUnit.prototype.test = function(test) {
+XUnit.prototype.test = function (test) {
   var attrs = {
     classname: test.parent.fullTitle(),
     name: test.title,
@@ -127,8 +132,8 @@ XUnit.prototype.test = function(test) {
 
   if (test.state === 'failed') {
     var err = test.err;
-    this.write(tag('testcase', attrs, false, tag('failure', {}, false, cdata(escape(err.message) + '\n' + err.stack))));
-  } else if (test.pending) {
+    this.write(tag('testcase', attrs, false, tag('failure', {}, false, escape(err.message) + '\n' + escape(err.stack))));
+  } else if (test.isPending()) {
     this.write(tag('testcase', attrs, false, tag('skipped', {}, true)));
   } else {
     this.write(tag('testcase', attrs, true));
@@ -144,7 +149,7 @@ XUnit.prototype.test = function(test) {
  * @param content
  * @return {string}
  */
-function tag(name, attrs, close, content) {
+function tag (name, attrs, close, content) {
   var end = close ? '/>' : '>';
   var pairs = [];
   var tag;
@@ -160,12 +165,4 @@ function tag(name, attrs, close, content) {
     tag += content + '</' + name + end;
   }
   return tag;
-}
-
-/**
- * Return cdata escaped CDATA `str`.
- */
-
-function cdata(str) {
-  return '<![CDATA[' + escape(str) + ']]>';
 }

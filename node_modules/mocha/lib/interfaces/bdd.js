@@ -1,10 +1,10 @@
+'use strict';
+
 /**
  * Module dependencies.
  */
 
-var Suite = require('../suite');
 var Test = require('../test');
-var escapeRe = require('escape-string-regexp');
 
 /**
  * BDD-style interface:
@@ -23,11 +23,11 @@ var escapeRe = require('escape-string-regexp');
  *
  * @param {Suite} suite Root suite.
  */
-module.exports = function(suite) {
+module.exports = function (suite) {
   var suites = [suite];
 
-  suite.on('pre-require', function(context, file, mocha) {
-    var common = require('./common')(suites, context);
+  suite.on('pre-require', function (context, file, mocha) {
+    var common = require('./common')(suites, context, mocha);
 
     context.before = common.before;
     context.after = common.after;
@@ -40,35 +40,36 @@ module.exports = function(suite) {
      * and/or tests.
      */
 
-    context.describe = context.context = function(title, fn) {
-      var suite = Suite.create(suites[0], title);
-      suite.file = file;
-      suites.unshift(suite);
-      fn.call(suite);
-      suites.shift();
-      return suite;
+    context.describe = context.context = function (title, fn) {
+      return common.suite.create({
+        title: title,
+        file: file,
+        fn: fn
+      });
     };
 
     /**
      * Pending describe.
      */
 
-    context.xdescribe = context.xcontext = context.describe.skip = function(title, fn) {
-      var suite = Suite.create(suites[0], title);
-      suite.pending = true;
-      suites.unshift(suite);
-      fn.call(suite);
-      suites.shift();
+    context.xdescribe = context.xcontext = context.describe.skip = function (title, fn) {
+      return common.suite.skip({
+        title: title,
+        file: file,
+        fn: fn
+      });
     };
 
     /**
      * Exclusive suite.
      */
 
-    context.describe.only = function(title, fn) {
-      var suite = context.describe(title, fn);
-      mocha.grep(suite.fullTitle());
-      return suite;
+    context.describe.only = function (title, fn) {
+      return common.suite.only({
+        title: title,
+        file: file,
+        fn: fn
+      });
     };
 
     /**
@@ -77,9 +78,9 @@ module.exports = function(suite) {
      * acting as a thunk.
      */
 
-    context.it = context.specify = function(title, fn) {
+    context.it = context.specify = function (title, fn) {
       var suite = suites[0];
-      if (suite.pending) {
+      if (suite.isPending()) {
         fn = null;
       }
       var test = new Test(title, fn);
@@ -92,19 +93,23 @@ module.exports = function(suite) {
      * Exclusive test-case.
      */
 
-    context.it.only = function(title, fn) {
-      var test = context.it(title, fn);
-      var reString = '^' + escapeRe(test.fullTitle()) + '$';
-      mocha.grep(new RegExp(reString));
-      return test;
+    context.it.only = function (title, fn) {
+      return common.test.only(mocha, context.it(title, fn));
     };
 
     /**
      * Pending test case.
      */
 
-    context.xit = context.xspecify = context.it.skip = function(title) {
+    context.xit = context.xspecify = context.it.skip = function (title) {
       context.it(title);
+    };
+
+    /**
+     * Number of attempts to retry.
+     */
+    context.it.retries = function (n) {
+      context.retries(n);
     };
   });
 };

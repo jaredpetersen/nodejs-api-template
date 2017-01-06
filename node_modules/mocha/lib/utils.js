@@ -1,23 +1,31 @@
+'use strict';
+
 /* eslint-env browser */
 
 /**
  * Module dependencies.
  */
 
+var JSON = require('json3');
 var basename = require('path').basename;
 var debug = require('debug')('mocha:watch');
 var exists = require('fs').existsSync || require('path').existsSync;
 var glob = require('glob');
-var join = require('path').join;
+var path = require('path');
+var join = path.join;
 var readdirSync = require('fs').readdirSync;
 var statSync = require('fs').statSync;
 var watchFile = require('fs').watchFile;
+var lstatSync = require('fs').lstatSync;
+var toISOString = require('./to-iso-string');
 
 /**
  * Ignored directories.
  */
 
 var ignore = ['node_modules', '.git'];
+
+exports.inherits = require('util').inherits;
 
 /**
  * Escape special characters in the given string of html.
@@ -26,7 +34,7 @@ var ignore = ['node_modules', '.git'];
  * @param  {string} html
  * @return {string}
  */
-exports.escape = function(html) {
+exports.escape = function (html) {
   return String(html)
     .replace(/&/g, '&amp;')
     .replace(/"/g, '&quot;')
@@ -42,7 +50,7 @@ exports.escape = function(html) {
  * @param {Function} fn
  * @param {Object} scope
  */
-exports.forEach = function(arr, fn, scope) {
+exports.forEach = function (arr, fn, scope) {
   for (var i = 0, l = arr.length; i < l; i++) {
     fn.call(scope, arr[i], i);
   }
@@ -55,7 +63,7 @@ exports.forEach = function(arr, fn, scope) {
  * @param {Object} obj
  * @return {boolean}
  */
-exports.isString = function(obj) {
+exports.isString = function (obj) {
   return typeof obj === 'string';
 };
 
@@ -68,7 +76,7 @@ exports.isString = function(obj) {
  * @param {Object} scope
  * @return {Array}
  */
-exports.map = function(arr, fn, scope) {
+exports.map = function (arr, fn, scope) {
   var result = [];
   for (var i = 0, l = arr.length; i < l; i++) {
     result.push(fn.call(scope, arr[i], i, arr));
@@ -85,7 +93,7 @@ exports.map = function(arr, fn, scope) {
  * @param {number} start
  * @return {number}
  */
-exports.indexOf = function(arr, obj, start) {
+var indexOf = exports.indexOf = function (arr, obj, start) {
   for (var i = start || 0, l = arr.length; i < l; i++) {
     if (arr[i] === obj) {
       return i;
@@ -103,7 +111,7 @@ exports.indexOf = function(arr, obj, start) {
  * @param {Object} val Initial value.
  * @return {*}
  */
-exports.reduce = function(arr, fn, val) {
+var reduce = exports.reduce = function (arr, fn, val) {
   var rval = val;
 
   for (var i = 0, l = arr.length; i < l; i++) {
@@ -121,7 +129,7 @@ exports.reduce = function(arr, fn, val) {
  * @param {Function} fn
  * @return {Array}
  */
-exports.filter = function(arr, fn) {
+exports.filter = function (arr, fn) {
   var ret = [];
 
   for (var i = 0, l = arr.length; i < l; i++) {
@@ -135,13 +143,30 @@ exports.filter = function(arr, fn) {
 };
 
 /**
+ * Array#some (<=IE8)
+ *
+ * @api private
+ * @param {Array} arr
+ * @param {Function} fn
+ * @return {Array}
+ */
+exports.some = function (arr, fn) {
+  for (var i = 0, l = arr.length; i < l; i++) {
+    if (fn(arr[i])) {
+      return true;
+    }
+  }
+  return false;
+};
+
+/**
  * Object.keys (<=IE8)
  *
  * @api private
  * @param {Object} obj
  * @return {Array} keys
  */
-exports.keys = typeof Object.keys === 'function' ? Object.keys : function(obj) {
+exports.keys = typeof Object.keys === 'function' ? Object.keys : function (obj) {
   var keys = [];
   var has = Object.prototype.hasOwnProperty; // for `window` on <=IE8
 
@@ -162,11 +187,11 @@ exports.keys = typeof Object.keys === 'function' ? Object.keys : function(obj) {
  * @param {Array} files
  * @param {Function} fn
  */
-exports.watch = function(files, fn) {
+exports.watch = function (files, fn) {
   var options = { interval: 100 };
-  files.forEach(function(file) {
+  files.forEach(function (file) {
     debug('file %s', file);
-    watchFile(file, options, function(curr, prev) {
+    watchFile(file, options, function (curr, prev) {
       if (prev.mtime < curr.mtime) {
         fn(file);
       }
@@ -181,9 +206,11 @@ exports.watch = function(files, fn) {
  * @param {Object} obj
  * @return {Boolean}
  */
-var isArray = typeof Array.isArray === 'function' ? Array.isArray : function(obj) {
+var isArray = typeof Array.isArray === 'function' ? Array.isArray : function (obj) {
   return Object.prototype.toString.call(obj) === '[object Array]';
 };
+
+exports.isArray = isArray;
 
 /**
  * Buffer.prototype.toJSON polyfill.
@@ -191,7 +218,7 @@ var isArray = typeof Array.isArray === 'function' ? Array.isArray : function(obj
  * @type {Function}
  */
 if (typeof Buffer !== 'undefined' && Buffer.prototype) {
-  Buffer.prototype.toJSON = Buffer.prototype.toJSON || function() {
+  Buffer.prototype.toJSON = Buffer.prototype.toJSON || function () {
     return Array.prototype.slice.call(this, 0);
   };
 }
@@ -203,7 +230,7 @@ if (typeof Buffer !== 'undefined' && Buffer.prototype) {
  * @param {string} path
  * @return {boolean}
  */
-function ignored(path) {
+function ignored (path) {
   return !~ignore.indexOf(path);
 }
 
@@ -216,7 +243,7 @@ function ignored(path) {
  * @param {Array} [ret=[]]
  * @return {Array}
  */
-exports.files = function(dir, ext, ret) {
+exports.files = function (dir, ext, ret) {
   ret = ret || [];
   ext = ext || ['js'];
 
@@ -224,9 +251,9 @@ exports.files = function(dir, ext, ret) {
 
   readdirSync(dir)
     .filter(ignored)
-    .forEach(function(path) {
+    .forEach(function (path) {
       path = join(dir, path);
-      if (statSync(path).isDirectory()) {
+      if (lstatSync(path).isDirectory()) {
         exports.files(path, ext, ret);
       } else if (path.match(re)) {
         ret.push(path);
@@ -243,7 +270,7 @@ exports.files = function(dir, ext, ret) {
  * @param {string} str
  * @return {string}
  */
-exports.slug = function(str) {
+exports.slug = function (str) {
   return str
     .toLowerCase()
     .replace(/ +/g, '-')
@@ -256,15 +283,15 @@ exports.slug = function(str) {
  * @param {string} str
  * @return {string}
  */
-exports.clean = function(str) {
+exports.clean = function (str) {
   str = str
     .replace(/\r\n?|[\n\u2028\u2029]/g, '\n').replace(/^\uFEFF/, '')
-    .replace(/^function *\(.*\)\s*{|\(.*\) *=> *{?/, '')
-    .replace(/\s+\}$/, '');
+    // (traditional)->  space/name     parameters    body     (lambda)-> parameters       body   multi-statement/single          keep body content
+    .replace(/^function(?:\s*|\s+[^(]*)\([^)]*\)\s*\{((?:.|\n)*?)\s*\}$|^\([^)]*\)\s*=>\s*(?:\{((?:.|\n)*?)\s*\}|((?:.|\n)*))$/, '$1$2$3');
 
   var spaces = str.match(/^\n?( *)/)[1].length;
   var tabs = str.match(/^\n?(\t*)/)[1].length;
-  var re = new RegExp('^\n?' + (tabs ? '\t' : ' ') + '{' + (tabs ? tabs : spaces) + '}', 'gm');
+  var re = new RegExp('^\n?' + (tabs ? '\t' : ' ') + '{' + (tabs || spaces) + '}', 'gm');
 
   str = str.replace(re, '');
 
@@ -278,7 +305,7 @@ exports.clean = function(str) {
  * @param {string} str
  * @return {string}
  */
-exports.trim = function(str) {
+exports.trim = function (str) {
   return str.replace(/^\s+|\s+$/g, '');
 };
 
@@ -289,8 +316,8 @@ exports.trim = function(str) {
  * @param {string} qs
  * @return {Object}
  */
-exports.parseQuery = function(qs) {
-  return exports.reduce(qs.replace('?', '').split('&'), function(obj, pair) {
+exports.parseQuery = function (qs) {
+  return reduce(qs.replace('?', '').split('&'), function (obj, pair) {
     var i = pair.indexOf('=');
     var key = pair.slice(0, i);
     var val = pair.slice(++i);
@@ -307,7 +334,7 @@ exports.parseQuery = function(qs) {
  * @param {string} js
  * @return {string}
  */
-function highlight(js) {
+function highlight (js) {
   return js
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -325,7 +352,7 @@ function highlight(js) {
  * @api private
  * @param {string} name
  */
-exports.highlightTags = function(name) {
+exports.highlightTags = function (name) {
   var code = document.getElementById('mocha').getElementsByTagName(name);
   for (var i = 0, len = code.length; i < len; ++i) {
     code[i].innerHTML = highlight(code[i].innerHTML);
@@ -343,13 +370,11 @@ exports.highlightTags = function(name) {
  *
  * @api private
  * @param {*} value The value to inspect.
- * @param {string} [type] The type of the value, if known.
+ * @param {string} typeHint The type of the value
  * @returns {string}
  */
-function emptyRepresentation(value, type) {
-  type = type || exports.type(value);
-
-  switch (type) {
+function emptyRepresentation (value, typeHint) {
+  switch (typeHint) {
     case 'function':
       return '[Function]';
     case 'object':
@@ -368,7 +393,7 @@ function emptyRepresentation(value, type) {
  * @api private
  * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/toString
  * @param {*} value The value to test.
- * @returns {string}
+ * @returns {string} Computed type
  * @example
  * type({}) // 'object'
  * type([]) // 'array'
@@ -380,8 +405,9 @@ function emptyRepresentation(value, type) {
  * type(/foo/) // 'regexp'
  * type('type') // 'string'
  * type(global) // 'global'
+ * type(new String('foo') // 'object'
  */
-exports.type = function type(value) {
+var type = exports.type = function type (value) {
   if (value === undefined) {
     return 'undefined';
   } else if (value === null) {
@@ -409,26 +435,37 @@ exports.type = function type(value) {
  * @param {*} value
  * @return {string}
  */
-exports.stringify = function(value) {
-  var type = exports.type(value);
+exports.stringify = function (value) {
+  var typeHint = type(value);
 
-  if (!~exports.indexOf(['object', 'array', 'function'], type)) {
-    if (type !== 'buffer') {
+  if (!~indexOf(['object', 'array', 'function'], typeHint)) {
+    if (typeHint === 'buffer') {
+      var json = value.toJSON();
+      // Based on the toJSON result
+      return jsonStringify(json.data && json.type ? json.data : json, 2)
+        .replace(/,(\n|$)/g, '$1');
+    }
+
+    // IE7/IE8 has a bizarre String constructor; needs to be coerced
+    // into an array and back to obj.
+    if (typeHint === 'string' && typeof value === 'object') {
+      value = reduce(value.split(''), function (acc, char, idx) {
+        acc[idx] = char;
+        return acc;
+      }, {});
+      typeHint = 'object';
+    } else {
       return jsonStringify(value);
     }
-    var json = value.toJSON();
-    // Based on the toJSON result
-    return jsonStringify(json.data && json.type ? json.data : json, 2)
-      .replace(/,(\n|$)/g, '$1');
   }
 
   for (var prop in value) {
     if (Object.prototype.hasOwnProperty.call(value, prop)) {
-      return jsonStringify(exports.canonicalize(value), 2).replace(/,(\n|$)/g, '$1');
+      return jsonStringify(exports.canonicalize(value, null, typeHint), 2).replace(/,(\n|$)/g, '$1');
     }
   }
 
-  return emptyRepresentation(value, type);
+  return emptyRepresentation(value, typeHint);
 };
 
 /**
@@ -440,7 +477,7 @@ exports.stringify = function(value) {
  * @param {number=} depth
  * @returns {*}
  */
-function jsonStringify(object, spaces, depth) {
+function jsonStringify (object, spaces, depth) {
   if (typeof spaces === 'undefined') {
     // primitive types
     return _stringify(object);
@@ -450,14 +487,14 @@ function jsonStringify(object, spaces, depth) {
   var space = spaces * depth;
   var str = isArray(object) ? '[' : '{';
   var end = isArray(object) ? ']' : '}';
-  var length = object.length || exports.keys(object).length;
+  var length = typeof object.length === 'number' ? object.length : exports.keys(object).length;
   // `.repeat()` polyfill
-  function repeat(s, n) {
+  function repeat (s, n) {
     return new Array(n).join(s);
   }
 
-  function _stringify(val) {
-    switch (exports.type(val)) {
+  function _stringify (val) {
+    switch (type(val)) {
       case 'null':
       case 'undefined':
         val = '[' + val + ']';
@@ -468,15 +505,19 @@ function jsonStringify(object, spaces, depth) {
         break;
       case 'boolean':
       case 'regexp':
+      case 'symbol':
       case 'number':
         val = val === 0 && (1 / val) === -Infinity // `-0`
           ? '-0'
           : val.toString();
         break;
       case 'date':
-        var sDate = isNaN(val.getTime())        // Invalid date
-          ? val.toString()
-          : val.toISOString();
+        var sDate;
+        if (isNaN(val.getTime())) { // Invalid date
+          sDate = val.toString();
+        } else {
+          sDate = val.toISOString ? val.toISOString() : toISOString(val);
+        }
         val = '[Date: ' + sDate + ']';
         break;
       case 'buffer':
@@ -494,19 +535,19 @@ function jsonStringify(object, spaces, depth) {
   }
 
   for (var i in object) {
-    if (!object.hasOwnProperty(i)) {
+    if (!Object.prototype.hasOwnProperty.call(object, i)) {
       continue; // not my business
     }
     --length;
-    str += '\n ' + repeat(' ', space)
-      + (isArray(object) ? '' : '"' + i + '": ') // key
-      + _stringify(object[i])                     // value
-      + (length ? ',' : '');                     // comma
+    str += '\n ' + repeat(' ', space) +
+      (isArray(object) ? '' : '"' + i + '": ') + // key
+      _stringify(object[i]) +                    // value
+      (length ? ',' : '');                       // comma
   }
 
-  return str
+  return str +
     // [], {}
-    + (str.length !== 1 ? '\n' + repeat(' ', --space) + end : end);
+    (str.length !== 1 ? '\n' + repeat(' ', --space) + end : end);
 }
 
 /**
@@ -516,7 +557,7 @@ function jsonStringify(object, spaces, depth) {
  * @param {*} value The value to test.
  * @return {boolean} True if `value` is a buffer, otherwise false
  */
-exports.isBuffer = function(value) {
+exports.isBuffer = function (value) {
   return typeof Buffer !== 'undefined' && Buffer.isBuffer(value);
 };
 
@@ -536,15 +577,16 @@ exports.isBuffer = function(value) {
  * @see {@link exports.stringify}
  * @param {*} value Thing to inspect.  May or may not have properties.
  * @param {Array} [stack=[]] Stack of seen values
+ * @param {string} [typeHint] Type hint
  * @return {(Object|Array|Function|string|undefined)}
  */
-exports.canonicalize = function(value, stack) {
+exports.canonicalize = function canonicalize (value, stack, typeHint) {
   var canonicalizedObj;
   /* eslint-disable no-unused-vars */
   var prop;
   /* eslint-enable no-unused-vars */
-  var type = exports.type(value);
-  function withStack(value, fn) {
+  typeHint = typeHint || type(value);
+  function withStack (value, fn) {
     stack.push(value);
     fn();
     stack.pop();
@@ -552,19 +594,19 @@ exports.canonicalize = function(value, stack) {
 
   stack = stack || [];
 
-  if (exports.indexOf(stack, value) !== -1) {
+  if (indexOf(stack, value) !== -1) {
     return '[Circular]';
   }
 
-  switch (type) {
+  switch (typeHint) {
     case 'undefined':
     case 'buffer':
     case 'null':
       canonicalizedObj = value;
       break;
     case 'array':
-      withStack(value, function() {
-        canonicalizedObj = exports.map(value, function(item) {
+      withStack(value, function () {
+        canonicalizedObj = exports.map(value, function (item) {
           return exports.canonicalize(item, stack);
         });
       });
@@ -577,14 +619,14 @@ exports.canonicalize = function(value, stack) {
       }
       /* eslint-enable guard-for-in */
       if (!canonicalizedObj) {
-        canonicalizedObj = emptyRepresentation(value, type);
+        canonicalizedObj = emptyRepresentation(value, typeHint);
         break;
       }
     /* falls through */
     case 'object':
       canonicalizedObj = canonicalizedObj || {};
-      withStack(value, function() {
-        exports.forEach(exports.keys(value).sort(), function(key) {
+      withStack(value, function () {
+        exports.forEach(exports.keys(value).sort(), function (key) {
           canonicalizedObj[key] = exports.canonicalize(value[key], stack);
         });
       });
@@ -593,10 +635,11 @@ exports.canonicalize = function(value, stack) {
     case 'number':
     case 'regexp':
     case 'boolean':
+    case 'symbol':
       canonicalizedObj = value;
       break;
     default:
-      canonicalizedObj = value.toString();
+      canonicalizedObj = value + '';
   }
 
   return canonicalizedObj;
@@ -611,7 +654,7 @@ exports.canonicalize = function(value, stack) {
  * @param {boolean} recursive Whether or not to recurse into subdirectories.
  * @return {string[]} An array of paths.
  */
-exports.lookupFiles = function lookupFiles(path, extensions, recursive) {
+exports.lookupFiles = function lookupFiles (path, extensions, recursive) {
   var files = [];
   var re = new RegExp('\\.(' + extensions.join('|') + ')$');
 
@@ -637,7 +680,7 @@ exports.lookupFiles = function lookupFiles(path, extensions, recursive) {
     return;
   }
 
-  readdirSync(path).forEach(function(file) {
+  readdirSync(path).forEach(function (file) {
     file = join(path, file);
     try {
       var stat = statSync(file);
@@ -666,7 +709,7 @@ exports.lookupFiles = function lookupFiles(path, extensions, recursive) {
  * @return {Error}
  */
 
-exports.undefinedError = function() {
+exports.undefinedError = function () {
   return new Error('Caught undefined error, did you throw without specifying what?');
 };
 
@@ -677,7 +720,7 @@ exports.undefinedError = function() {
  * @return {Error}
  */
 
-exports.getError = function(err) {
+exports.getError = function (err) {
   return err || exports.undefinedError();
 };
 
@@ -687,54 +730,74 @@ exports.getError = function(err) {
  * @description
  * When invoking this function you get a filter function that get the Error.stack as an input,
  * and return a prettify output.
- * (i.e: strip Mocha, node_modules, bower and componentJS from stack trace).
+ * (i.e: strip Mocha and internal node functions from stack trace).
  * @returns {Function}
  */
-exports.stackTraceFilter = function() {
+exports.stackTraceFilter = function () {
   // TODO: Replace with `process.browser`
-  var slash = '/';
   var is = typeof document === 'undefined' ? { node: true } : { browser: true };
-  var cwd = is.node
-      ? process.cwd() + slash
-      : (typeof location === 'undefined' ? window.location : location).href.replace(/\/[^\/]*$/, '/');
-
-  function isMochaInternal(line) {
-    return (~line.indexOf('node_modules' + slash + 'mocha'))
-      || (~line.indexOf('components' + slash + 'mochajs'))
-      || (~line.indexOf('components' + slash + 'mocha'));
+  var slash = path.sep;
+  var cwd;
+  if (is.node) {
+    cwd = process.cwd() + slash;
+  } else {
+    cwd = (typeof location === 'undefined' ? window.location : location).href.replace(/\/[^\/]*$/, '/');
+    slash = '/';
   }
 
-  // node_modules, bower, componentJS
-  function isBrowserModule(line) {
-    return (~line.indexOf('node_modules')) || (~line.indexOf('components'));
+  function isMochaInternal (line) {
+    return (~line.indexOf('node_modules' + slash + 'mocha' + slash)) ||
+      (~line.indexOf('node_modules' + slash + 'mocha.js')) ||
+      (~line.indexOf('bower_components' + slash + 'mocha.js')) ||
+      (~line.indexOf(slash + 'mocha.js'));
   }
 
-  function isNodeInternal(line) {
-    return (~line.indexOf('(timers.js:'))
-      || (~line.indexOf('(events.js:'))
-      || (~line.indexOf('(node.js:'))
-      || (~line.indexOf('(module.js:'))
-      || (~line.indexOf('GeneratorFunctionPrototype.next (native)'))
-      || false;
+  function isNodeInternal (line) {
+    return (~line.indexOf('(timers.js:')) ||
+      (~line.indexOf('(events.js:')) ||
+      (~line.indexOf('(node.js:')) ||
+      (~line.indexOf('(module.js:')) ||
+      (~line.indexOf('GeneratorFunctionPrototype.next (native)')) ||
+      false;
   }
 
-  return function(stack) {
+  return function (stack) {
     stack = stack.split('\n');
 
-    stack = exports.reduce(stack, function(list, line) {
-      if (is.node && (isMochaInternal(line) || isNodeInternal(line))) {
+    stack = reduce(stack, function (list, line) {
+      if (isMochaInternal(line)) {
         return list;
       }
 
-      if (is.browser && (isBrowserModule(line))) {
+      if (is.node && isNodeInternal(line)) {
         return list;
       }
 
       // Clean up cwd(absolute)
-      list.push(line.replace(cwd, ''));
+      if (/\(?.+:\d+:\d+\)?$/.test(line)) {
+        line = line.replace(cwd, '');
+      }
+
+      list.push(line);
       return list;
     }, []);
 
     return stack.join('\n');
   };
 };
+
+/**
+ * Crude, but effective.
+ * @api
+ * @param {*} value
+ * @returns {boolean} Whether or not `value` is a Promise
+ */
+exports.isPromise = function isPromise (value) {
+  return typeof value === 'object' && typeof value.then === 'function';
+};
+
+/**
+ * It's a noop.
+ * @api
+ */
+exports.noop = function () {};

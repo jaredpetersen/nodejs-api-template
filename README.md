@@ -1,20 +1,11 @@
 # Node.js REST API Template
-Simple template for creating a Node.js REST API (with MongoDB)
+Simple template for creating a Node.js REST API
 
 ## Endpoints
-__Users:__
-- GET /users
-- GET /users/:id
-- POST /users
-- DELETE /users/:id
-- PUT /users/:id
+* `GET /tasks`: Lists all tasks
+* `POST /buggyroute`: Returns an error
+* `null`: 404, endpoint requested does not exist
 
-__Tasks:__
-- GET /tasks
-- GET /tasks/:id
-- POST /tasks
-- DELETE /tasks/:id
-- PUT /tasks/:id
-
-__Authenticate:__
-- POST /authenticate
+## Testing
+* `npm test`: Run tests
+* `npm run test-coverage`: Run tests with istanbul

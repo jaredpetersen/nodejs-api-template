@@ -1,9 +1,11 @@
+'use strict';
+
 /**
  * Module dependencies.
  */
 
 var Base = require('./base');
-var create = require('lodash.create');
+var inherits = require('../utils').inherits;
 var color = Base.color;
 var cursor = Base.cursor;
 
@@ -26,11 +28,11 @@ Base.colors.progress = 90;
  * @param {Runner} runner
  * @param {Object} options
  */
-function Progress(runner, options) {
+function Progress (runner, options) {
   Base.call(this, runner);
 
   var self = this;
-  var width = Base.window.width * .50 | 0;
+  var width = Base.window.width * 0.50 | 0;
   var total = runner.total;
   var complete = 0;
   var lastN = -1;
@@ -44,13 +46,13 @@ function Progress(runner, options) {
   options.verbose = false;
 
   // tests started
-  runner.on('start', function() {
+  runner.on('start', function () {
     console.log();
     cursor.hide();
   });
 
   // tests complete
-  runner.on('test end', function() {
+  runner.on('test end', function () {
     complete++;
 
     var percent = complete / total;
@@ -76,7 +78,7 @@ function Progress(runner, options) {
 
   // tests are complete, output some stats
   // and the failures if any
-  runner.on('end', function() {
+  runner.on('end', function () {
     cursor.show();
     console.log();
     self.epilogue();
@@ -86,7 +88,4 @@ function Progress(runner, options) {
 /**
  * Inherit from `Base.prototype`.
  */
-
-Progress.prototype = create(Base.prototype, {
-  constructor: Progress
-});
+inherits(Progress, Base);

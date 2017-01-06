@@ -1,38 +1,22 @@
 'use strict';
 
-module.exports = function (app) {
+let router = require('express').Router();
 
-    // Middleware
-    var middleware = require('./controllers/middleware');
-    app.use(middleware.logEverything);
+// Middleware
+let middleware = require('./controllers/middleware');
+router.use(middleware.doSomethingInteresting);
 
-    // Authenticate
-    var authenticate = require('./controllers/authenticate');
-    app.post('/authenticate/', authenticate.login);
+// Tasks
+let tasks = require('./controllers/tasks');
+router.get('/tasks', tasks.findAll);
+router.post('/buggyroute', tasks.buggyRoute);
 
-    // Tasks
-    var tasks = require('./controllers/tasks');
-    app.get('/tasks', tasks.findAll);
-    app.get('/tasks/:id', tasks.findById);
-    app.post('/tasks', tasks.add);
-    app.put('/tasks/:id', tasks.update);
-    app.delete('/tasks/:id', tasks.delete);
+// Error Handling
+let errors = require('./controllers/errors');
+router.use(errors.errorHandler);
 
-    // Users
-    var users = require('./controllers/users');
-    app.get('/users', users.findAll);
-    app.get('/users/:id', users.findById);
-    app.post('/users', users.add);
-    app.put('/users/:id', users.update);
-    app.delete('/users/:id', users.delete);
+// Request was not picked up by a route, send 404
+router.use(errors.nullRoute);
 
-    // Error Handling
-    var errors = require('./controllers/errors');
-    app.use(errors.errorHandler);
-    app.use(errors.nullRoute); // Requested route doesn't exist
-
-    // To add authentication to a route, add a authenticate.verify to the
-    // parameters of the HTTP request. For example, if you want to lock down
-    // HTTP GET requests on /users, you would implement the following code:
-    //     app.get('/users', authenticate.verify, users.findAll);
-};
+// Export the router
+module.exports = router;

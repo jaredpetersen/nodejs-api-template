@@ -1,6 +1,6 @@
 'use strict';
 
-exports.logEverything = function(req, res, next) {
+exports.doSomethingInteresting = (req, res, next) => {
     // Middleware goes here
     next();
 };

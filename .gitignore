@@ -1,3 +1,5 @@
-# Ignore log files
-log/*
+# Ignore node modules, log files, and test coverage results
+node_modules
+log
 *.log
+coverage

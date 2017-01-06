@@ -1,27 +1,24 @@
 {
-  "name": "template-api",
+  "name": "api-template",
   "main": "server.js",
   "version": "0.0.1",
-  "author": "Jared Petersen",
+  "author": "Jared Petersen <jaredtoddpetersen@gmail.com> (https://github.com/jaredpetersen)",
+  "license": "MIT",
   "scripts": {
-    "test": "node server.js & sleep 5s && ./node_modules/.bin/mocha --reporter spec"
+    "test": "./node_modules/.bin/mocha --reporter spec",
+    "test-coverage": "./node_modules/.bin/istanbul cover node_modules/mocha/bin/_mocha -- --reporter spec --recursive"
   },
   "dependencies": {
-    "bcryptjs": "^2.2.1",
-    "body-parser": "^1.13.1",
-    "chai": "^3.2.0",
-    "express": "^4.13.1",
-    "file-stream-rotator": "0.0.6",
-    "fs": "0.0.2",
-    "jsonwebtoken": "^5.0.4",
-    "mocha": "^2.2.5",
-    "mongoose": "^4.1.3",
-    "mongoose-id-validator": "^0.1.8",
-    "morgan": "^1.6.1"
+    "body-parser": "^1.15.2",
+    "config": "^1.24.0",
+    "express": "^4.14.0",
+    "file-stream-rotator": "0.0.7",
+    "morgan": "^1.7.0"
   },
   "devDependencies": {
-    "chai": "^3.2.0",
-    "mocha": "^2.2.5",
-    "supertest": "^1.0.1"
+    "chai": "^3.5.0",
+    "chai-http": "^3.0.0",
+    "istanbul": "^0.4.5",
+    "mocha": "^3.2.0"
   }
 }

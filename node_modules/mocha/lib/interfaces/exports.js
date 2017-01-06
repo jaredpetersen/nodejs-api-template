@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * Module dependencies.
  */
@@ -6,7 +8,7 @@ var Suite = require('../suite');
 var Test = require('../test');
 
 /**
- * TDD-style interface:
+ * Exports-style (as Node.js module) interface:
  *
  *     exports.Array = {
  *       '#indexOf()': {
@@ -22,12 +24,12 @@ var Test = require('../test');
  *
  * @param {Suite} suite Root suite.
  */
-module.exports = function(suite) {
+module.exports = function (suite) {
   var suites = [suite];
 
   suite.on('require', visit);
 
-  function visit(obj, file) {
+  function visit (obj, file) {
     var suite;
     for (var key in obj) {
       if (typeof obj[key] === 'function') {
@@ -53,7 +55,7 @@ module.exports = function(suite) {
       } else {
         suite = Suite.create(suites[0], key);
         suites.unshift(suite);
-        visit(obj[key]);
+        visit(obj[key], file);
         suites.shift();
       }
     }
