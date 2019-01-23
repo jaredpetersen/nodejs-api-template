@@ -3,9 +3,13 @@ Simple template for creating a Node.js REST API
 
 ## Endpoints
 * `GET /tasks`: Lists all tasks
-* `POST /buggyroute`: Returns an error
+* `POST /tasks`: Intentionally buggy route, returns an error
 * `null`: 404, endpoint requested does not exist
 
-## Testing
-* `npm test`: Run tests
-* `npm run test-coverage`: Run tests with istanbul
+## Usage
+```
+npm install
+npm test
+npm run test-coverage
+npm start
+```

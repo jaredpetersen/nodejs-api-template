@@ -2,10 +2,10 @@
 
 process.env.NODE_ENV = 'test';
 
-let chai = require('chai');
-let chaiHttp = require('chai-http');
-let should = chai.should();
-let server = require('../server');
+const chai = require('chai');
+const chaiHttp = require('chai-http');
+const should = chai.should();
+const server = require('../../server');
 
 chai.use(chaiHttp);
 
@@ -24,10 +24,10 @@ describe('Tasks', () => {
     });
   });
 
-  describe('POST /buggyroute', () => {
+  describe('POST /tasks', () => {
     it('returns an error', (done) => {
       chai.request(server)
-        .post('/buggyroute')
+        .post('/tasks')
         .end((err, res) => {
           res.should.have.status(400);
           res.body.should.be.a('object');

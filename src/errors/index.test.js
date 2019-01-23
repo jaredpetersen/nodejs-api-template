@@ -2,11 +2,11 @@
 
 process.env.NODE_ENV = 'test';
 
-let chai = require('chai');
-let chaiHttp = require('chai-http');
-let should = chai.should();
-let errors = require('../controllers/errors');
-let server = require('../server');
+const chai = require('chai');
+const chaiHttp = require('chai-http');
+const should = chai.should();
+const errors = require('./index');
+const server = require('../../server');
 
 describe('Errors', () => {
 

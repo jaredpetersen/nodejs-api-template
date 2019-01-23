@@ -1,21 +1,18 @@
 'use strict';
 
-let router = require('express').Router();
+const router = require('express').Router();
+const middleware = require('./src/middleware');
+const errors = require('./src/errors');
+const taskRouter = require('./src/tasks/router');
 
-// Middleware
-let middleware = require('./controllers/middleware');
+// Wire up middleware
 router.use(middleware.doSomethingInteresting);
 
-// Tasks
-let tasks = require('./controllers/tasks');
-router.get('/tasks', tasks.findAll);
-router.post('/buggyroute', tasks.buggyRoute);
+// Wire up routers
+router.use('/tasks', taskRouter);
 
-// Error Handling
-let errors = require('./controllers/errors');
+// Wire up error-handling middleware
 router.use(errors.errorHandler);
-
-// Request was not picked up by a route, send 404
 router.use(errors.nullRoute);
 
 // Export the router

@@ -1,6 +1,6 @@
 'use strict';
 
-let errors = require('./errors.js');
+const errors = require('../errors');
 
 exports.findAll = (req, res, next) => {
   // Simulate task list, normally this would be retrieved from a database

@@ -21,6 +21,7 @@ exports.newHttpError = (status, message) => {
 
   // Eliminates problem where a null message would get passed in and the final
   // error message would become 'null' (stringified null)
+  // TODO fix this
   if (message == null) {
     err = new Error();
   }
