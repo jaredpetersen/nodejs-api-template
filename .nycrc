@@ -5,6 +5,9 @@
   "statements": 99,
   "functions": 99,
   "branches": 99,
+  "exclude": [
+    "**/*.test-*.js"
+  ],
   "reporter": [
     "lcov",
     "json",
