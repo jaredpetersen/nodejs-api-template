@@ -10,10 +10,8 @@
     "coverage": "nyc npm test"
   },
   "dependencies": {
-    "body-parser": "^1.18.3",
     "config": "^3.0.1",
     "express": "^4.16.4",
-    "file-stream-rotator": "0.0.7",
     "morgan": "^1.7.0"
   },
   "devDependencies": {
