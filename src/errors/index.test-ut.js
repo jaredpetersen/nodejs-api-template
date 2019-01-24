@@ -22,9 +22,9 @@ describe('Errors - UT', () => {
       const resMock = {};
       resMock.status = (statusCode) => {
         expect(statusCode).to.equal(errStub.status);
-        return resMock;
+        return resMock.status;
       };
-      resMock.json = (json) => {
+      resMock.status.json = (json) => {
         expect(json).to.deep.equal({ message: errStub.message });
         done();
       };
@@ -47,9 +47,9 @@ describe('Errors - UT', () => {
       const resMock = {};
       resMock.status = (statusCode) => {
         expect(statusCode).to.equal(500);
-        return resMock;
+        return resMock.status;
       };
-      resMock.json = (json) => {
+      resMock.status.json = (json) => {
         expect(json).to.deep.equal({ message: 'internal server error' });
         done();
       };
@@ -73,9 +73,9 @@ describe('Errors - UT', () => {
       const resMock = {};
       resMock.status = (statusCode) => {
         expect(statusCode).to.equal(404);
-        return resMock;
+        return resMock.status;
       };
-      resMock.json = (json) => {
+      resMock.status.json = (json) => {
         expect(json).to.deep.equal({ message: 'not found' });
         done();
       };

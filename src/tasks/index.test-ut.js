@@ -18,9 +18,9 @@ describe('Tasks - UT', () => {
       const resMock = {};
       resMock.status = (statusCode) => {
         expect(statusCode).to.equal(200);
-        return resMock;
+        return resMock.status;
       };
-      resMock.json = (json) => {
+      resMock.status.json = (json) => {
         const expectedTasks = [
           {'_id': 1, 'name': 'milk'},
           {'_id': 2, 'name': 'cheese'},

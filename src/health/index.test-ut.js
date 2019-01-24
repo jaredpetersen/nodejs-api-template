@@ -18,9 +18,9 @@ describe('Health - UT', () => {
       const resMock = {};
       resMock.status = (statusCode) => {
         expect(statusCode).to.equal(200);
-        return resMock;
+        return resMock.status;
       };
-      resMock.json = (json) => {
+      resMock.status.json = (json) => {
         expect(json).to.deep.equal({ status: 'UP' });
         done();
       };
