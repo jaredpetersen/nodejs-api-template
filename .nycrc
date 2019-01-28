@@ -1,12 +1,13 @@
 {
   "check-coverage": true,
   "per-file": true,
-  "lines": 99,
-  "statements": 99,
-  "functions": 99,
-  "branches": 99,
+  "lines": 90,
+  "statements": 90,
+  "functions": 90,
+  "branches": 90,
   "exclude": [
-    "**/*.test-*.js"
+    "**/*.test-*.js",
+    "logger.js"
   ],
   "reporter": [
     "lcov",
