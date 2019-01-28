@@ -6,7 +6,7 @@
   "license": "MIT",
   "repository": "https://github.com/jaredpetersen/nodejs-api-template.git",
   "scripts": {
-    "test": "mocha src/**/*.test-*.js --exit",
+    "test": "NODE_ENV=test mocha src/**/*.test-*.js --exit",
     "coverage": "nyc npm test"
   },
   "dependencies": {
