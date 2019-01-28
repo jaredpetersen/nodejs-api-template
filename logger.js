@@ -3,8 +3,16 @@
 const winston = require('winston');
 const level = process.env.LOG_LEVEL || 'debug';
 
+const loggerFormat = winston.format.printf(({ level, message, timestamp }) => {
+  return `{"level": "${level}", "timestamp": "${timestamp}", "message": "${message}"}`;
+});
+
 const logger = winston.createLogger({
   level,
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    loggerFormat
+  ),
   transports: [
     new winston.transports.Console()
   ],
