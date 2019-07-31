@@ -1,7 +1,20 @@
 language: node_js
 node_js:
-  - "node"
   - "lts/*"
-branches:
-  only:
-    - master
+cache:
+  directories:
+    - node_modules
+deploy:
+  - provider: heroku
+    api_key:
+      secure: "Tara7djTpApOL+CXvk3+DvqcH3k9lO9DJiLoQYxxHpAR1UMNiVYPQ3Gc/EyTfIBcNZSmDXNVJZAuLowTXOzo1sRx3vGHklPKtZOBKVAQ5QlEtjHlIhY198xK8Nnd6KssUKZOdz920yG1scKv9tS/yA43ZfoaZshEpPLmlQHUA4h4jJnNvm8plOY9z/4f0rW35ikuQZc8z8w48DOjI3Z4bilcJiULD0Xmk5rlMyduZdmjjKRTov1Ru9d+D7iDKg4MXbMcCUtGpZSrYCe6N2uX6tCJjMVlVn0jham3FKH3yLSksfJj9UgHD0Xhx6/aCwq2/VngFm+W0ANKh1ToyaavYe7xhxr/xBlZ+YSFQLtngtkz7H6bCW3JlOIuuiP28Dv9z8+Rmt7TRNbiCmSz6/o1hgeMKGN8N3GckUwqIU7O6Pqc3KbUJs8zTPCGWOlLLVqmDhUnOcKT6lM2oRQ0HNImzPvjHyjMzJQv/5cSG6mk1lvqyBzMWGBkv//S3QqDlONXDGNMwFZzGYrBGRf7DeYnSMl8Bt6J1yBqsmpLsgmujCZebQ9jiXoO3aEM+KPfe6WD4PQ9dwemW5VMFvHbKj0csIM2ZyhJzblWrWKO1UPtbgmEvtwtalzzE7MysG+LDMqBwNnbj6RIVt722qIgysfZa0z0uO6uC7xbUE34V4jybkw="
+    app: ezhai24-api-template-stage
+    on:
+      branch: master
+  - provider: heroku
+    api_key:
+      secure: "ory6rYUrU8VVOabYU3aFgirwpTQkiAzX1o0LqEw/qr7JCehh+O/1GTl/JAo/8KEWk+6l1fxH6INRgC4XLcw6otyJMkNq38XR29lkZcpF1K516Zopb06EwlcxHQRvw2BwTAMnMQdzRD62FqAnGjUKe6S6DVV5oJrAYYbrijmi/AlUi4x+M8AwZC8pXodizONgHcxRLYkiw99cBPMevXgdUipo5dDQQOA8nNrr0Je2Ekn51C58HewI09QIAM1YvALUhk+YtdP6SSLvTml7bRsZOR0Xkwuj1AyJvq/AbdphDhyqYzTW3s2CHPbBpByLNLVX0KKje4NAXlbQhhcBTclMOFqOQ99AEMnUZU2X04i7EEULPIsCQ3gyR2+9s0o/aRyQWtjZ2smuPYATVT/OvxY0jA8tkT+ECmPJKooyshuT0j3DZyUE6lMvFKPHj4jQKlfR5GVy5WZCkYUPjIi6n8uiOdM77xeiCkJywLCOBfVT0Q1G/sVheDYYySx7bl3HbMsgGz2clJ7D/XpezY7dirwLKzh3E8gH1EUcpO68Uz01PKmBsFv/lq+2NFTnbU61s3ndd0kBd9sqexrZ/l+M79mTJmOg/pCy9D6glpfDdLK82BBLo/FBpShXJfXWjHYSy0kq7gVZEqtSqW3d4o8GotBjYjr513aTJEcirhmILqMEHek="
+    app: ezhai24-api-template
+    on:
+      branch: master
+      tags: true
