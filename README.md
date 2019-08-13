@@ -1,6 +1,5 @@
 # Node.js REST API Template
-[![Build Status](https://travis-ci.com/ezhai24/nodejs-api-template)](https://travis-ci.com/ezhai24/nodejs-api-template)
-
+[![Build Status](https://travis-ci.com/ezhai24/nodejs-api-template.svg?branch=master)](https://travis-ci.com/ezhai24/nodejs-api-template) 
 Simple template for creating a Node.js REST API
 
 ## Endpoints
