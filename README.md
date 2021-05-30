@@ -16,3 +16,5 @@ npm test
 npm run test-coverage
 npm start
 ```
+
+if you are on windows use ``npm run test_windows`` instead of `` npm test ``.
